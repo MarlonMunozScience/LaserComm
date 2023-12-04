@@ -1,4 +1,14 @@
 
+/*
+TODO:
+
+Handle error correction code for command line arguments 
+split code into .h and .cpp
+Adjust probabilites to work on number ~ 10^-5
+
+*/
+
+
 
 #include <iostream>
 #include <fstream> //For reading files
@@ -91,7 +101,7 @@ std::vector<int> signalErasure(std::vector<int> signalOriginal, double erasure_p
             // Convert our probaility to an int
             int probability_int = (int)(erasure_probability * 100);
 
-            if (random <= probability_int) {
+            if (random < probability_int) {
                 signalOriginal[counter] = 0;
 
                 debug_count++;
@@ -100,7 +110,7 @@ std::vector<int> signalErasure(std::vector<int> signalOriginal, double erasure_p
         }
         counter++;
     }
-    std::cout << debug_count << std::endl;
+    
     return signalOriginal;
 }
 
@@ -120,11 +130,11 @@ std::vector<int> signalNoise(std::vector<int> signalOriginal, double noise_proba
 
             // Generate a random number between 0 and 100
             int random = rand() % 100;
-            std::cout << random << " ";
+            
             // Convert our probaility to an int
             int probability_int = (int)(noise_probability * 100);
 
-            if (random <= probability_int) {
+            if (random < probability_int) {
                 signalOriginal[counter] = 1;
                 debug_count++;
             }
@@ -132,7 +142,7 @@ std::vector<int> signalNoise(std::vector<int> signalOriginal, double noise_proba
         }
         counter++;
     }
-    std::cout << debug_count << std::endl;
+    
     return signalOriginal;
 }
     
@@ -157,42 +167,61 @@ std::vector<int> BinarytoASCII(std::vector<int> BinaryVector) {
 
 int main(int argc, char** argv)
 {
-
-    double erasure_prob = 0;
-    double noise_prob = 0;
-    std::cout << "Hello World!\n";
-    std::string fname = R"(C:\Users\mmunoz\Desktop\Code\lasercomm\test.txt)";
+    // Script expects 3 arguments: Name of noise file in 'Noise' folder, erasure probability, and noise probability 
     
+    // If user does not input correct amount of commands
+    // Handling each input
+    for (int i = 0; i < argc; i++) {
+        if (std::string(argv[i]) == "-h") {
+            std::cout << "This code inserts noise and erasures into a ASCII file.";
+            std::cout << "The input file must be placed in the 'Noise' Folder" << std::endl;
+            std::cout << "Command Line arguments are: \n" << std::endl;
+            std::cout << "[Name of Input] [Erasure Probability] [Noise Probability]" << std::endl;
+            return 0;
+        }
+    }
+    if (argc != 4) {
+        std::cout << "You have entered an incorrect amount of arguments. Use -h for help." << std::endl;
+        return 0;
+    }
+
+
+    // Input file 
+    std::string input_file = argv[1];
+
+    // Erasure Probability
+    double erasure_prob = std::stod(argv[2]);
+
+    // Noise probability
+    double noise_prob = std::stod(argv[3]);
+
+    // DEBUGGING: printing out command line arguments to see if they worked
+    std::cout << input_file << ", " << erasure_prob << ", " << noise_prob << std::endl;
+
+    // Opening file
+    std::string fname = R"(Noise\test.txt)";
     std::vector<int> signal = openfile(fname);
 
     //Printing all the elements
     std::cout << signal << std::endl;
 
-    std::cout << "File open complete" << std::endl;
 
     std::vector<int> signalBinary = ASCIItoBinary(signal);
-
     std::cout << signalBinary << std::endl;
 
     std::vector<int> signalErasured = signalErasure(signalBinary, erasure_prob);
-
     std::cout << "\n" << signalErasured << std::endl;
 
     std::vector<int> signalNoised = signalNoise(signalErasured, noise_prob);
-
     std::cout << "\n" << signalNoised << std::endl;
 
     // Turning ASCII into Binary
-
     std::vector<int> outputBinary = BinarytoASCII(signalNoised);
-
     std::cout << "Binary Output\n" << outputBinary << std::endl;
 
     //Writes the vector to an output file
     std::ofstream outfile("output.txt");
-
     outfile << outputBinary << std::endl;
-
     outfile.close();
 
 
